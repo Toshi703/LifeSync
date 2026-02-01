@@ -2,17 +2,19 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>LifeSync Amélioré</title>
+<title>LifeSync Pro</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 body { font-family: sans-serif; transition: background-color 0.3s, color 0.3s;}
-.dark body { background-color: #1e293b; color: #f1f5f9; }
+.dark body { background-color: #1e293b; color: #f1f5f9;}
+.fade-in { animation: fadeIn 0.5s ease forwards;}
+@keyframes fadeIn { from {opacity:0; transform: translateY(10px);} to {opacity:1; transform: translateY(0);} }
 </style>
 </head>
 <body class="bg-gray-100 p-8">
 
-<h1 class="text-4xl font-bold mb-6 text-center">🌟 LifeSync Amélioré 🌟</h1>
+<h1 class="text-4xl font-bold mb-6 text-center">🌟 LifeSync Pro 🌟</h1>
 <p class="text-center mb-6">Gère tes tâches et ton énergie efficacement !</p>
 
 <!-- Ajouter une tâche -->
@@ -29,6 +31,12 @@ body { font-family: sans-serif; transition: background-color 0.3s, color 0.3s;}
 <div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded shadow">
   <h2 class="text-xl font-semibold mb-2">Tâches</h2>
   <ul id="taskList"></ul>
+</div>
+
+<!-- Historique tâches terminées -->
+<div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded shadow">
+  <h2 class="text-xl font-semibold mb-2">Historique des tâches terminées</h2>
+  <ul id="completedList"></ul>
 </div>
 
 <!-- Suggestion prochaine tâche -->
@@ -60,8 +68,13 @@ body { font-family: sans-serif; transition: background-color 0.3s, color 0.3s;}
   <p id="badgeText"></p>
 </div>
 
+<audio id="alertSound">
+  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+</audio>
+
 <script>
 let tasks = [];
+let completedTasks = [];
 let energyLog = [80];
 let lastEnergy = 80;
 
@@ -91,11 +104,42 @@ function addTask() {
 function renderTasks() {
   const list = document.getElementById('taskList');
   list.innerHTML = '';
-  tasks.forEach((t)=>{
+  tasks.forEach((t,i)=>{
     const li = document.createElement('li');
     li.textContent = `${t.title} - ${t.duration} min - priorité ${t.priority}`;
+    li.className = `p-1 rounded mb-1 fade-in ${priorityColor(t.priority)}`;
+    li.onclick = ()=>completeTask(i);
     list.appendChild(li);
   });
+}
+
+// Marquer tâche comme terminée
+function completeTask(index){
+  const task = tasks.splice(index,1)[0];
+  completedTasks.push(task);
+  renderTasks();
+  renderCompleted();
+  suggestNextTask();
+  updateBadge();
+}
+
+// Afficher historique terminé
+function renderCompleted(){
+  const list = document.getElementById('completedList');
+  list.innerHTML = '';
+  completedTasks.forEach(t=>{
+    const li = document.createElement('li');
+    li.textContent = `${t.title} - ${t.duration} min - priorité ${t.priority}`;
+    li.className = "p-1 rounded mb-1 bg-gray-300 dark:bg-gray-700";
+    list.appendChild(li);
+  });
+}
+
+// Définir couleur selon priorité
+function priorityColor(p){
+  if(p<=2) return 'bg-green-200 dark:bg-green-700';
+  if(p<=4) return 'bg-yellow-200 dark:bg-yellow-700';
+  return 'bg-red-200 dark:bg-red-700';
 }
 
 // Suggestion prochaine tâche
@@ -112,16 +156,18 @@ function suggestNextTask() {
 // Micro-pauses et alertes énergie
 function showEnergyAlert(val){
   const alertDiv = document.getElementById('energyAlert');
+  const audio = document.getElementById('alertSound');
   alertDiv.classList.remove('hidden');
   if(val>70){
     alertDiv.textContent = "💪 Tu es en pleine forme ! Continue comme ça.";
-    alertDiv.className = "mb-6 p-4 bg-green-100 dark:bg-green-900 rounded shadow";
+    alertDiv.className = "mb-6 p-4 bg-green-100 dark:bg-green-900 rounded shadow fade-in";
   } else if(val>40){
     alertDiv.textContent = "⚠️ Niveau d'énergie moyen. Pense à faire une petite pause.";
-    alertDiv.className = "mb-6 p-4 bg-yellow-100 dark:bg-yellow-900 rounded shadow";
+    alertDiv.className = "mb-6 p-4 bg-yellow-100 dark:bg-yellow-900 rounded shadow fade-in";
   } else {
     alertDiv.textContent = "⛔ Energie faible ! Repose-toi avant de continuer.";
-    alertDiv.className = "mb-6 p-4 bg-red-100 dark:bg-red-900 rounded shadow";
+    alertDiv.className = "mb-6 p-4 bg-red-100 dark:bg-red-900 rounded shadow fade-in";
+    audio.play();
   }
 }
 
@@ -171,6 +217,7 @@ function updateBadge() {
 
 // Initialisation
 renderTasks();
+renderCompleted();
 suggestNextTask();
 drawChart();
 updateBadge();
