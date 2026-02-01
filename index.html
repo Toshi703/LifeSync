@@ -2,57 +2,73 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>LifeSync</title>
+<title>LifeSync Amélioré</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-body { font-family: sans-serif; }
+body { font-family: sans-serif; transition: background-color 0.3s, color 0.3s;}
+.dark body { background-color: #1e293b; color: #f1f5f9; }
 </style>
 </head>
 <body class="bg-gray-100 p-8">
 
-<h1 class="text-3xl font-bold mb-6">LifeSync – Tableau de bord</h1>
+<h1 class="text-4xl font-bold mb-6 text-center">🌟 LifeSync Amélioré 🌟</h1>
+<p class="text-center mb-6">Gère tes tâches et ton énergie efficacement !</p>
 
 <!-- Ajouter une tâche -->
-<div class="mb-6 p-4 bg-white rounded shadow">
+<div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded shadow">
   <h2 class="text-xl font-semibold mb-2">Ajouter une tâche</h2>
   <input id="title" placeholder="Titre" class="border p-2 mr-2 rounded"/>
   <input id="duration" type="number" placeholder="Durée (min)" class="border p-2 mr-2 rounded w-24"/>
   <input id="priority" type="number" placeholder="Priorité (1-5)" min="1" max="5" value="1"
          class="border p-2 mr-2 rounded w-24"/>
-  <button onclick="addTask()" class="bg-blue-500 text-white p-2 rounded">Ajouter</button>
+  <button onclick="addTask()" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition">Ajouter</button>
 </div>
 
 <!-- Liste des tâches -->
-<div class="mb-6 p-4 bg-white rounded shadow">
+<div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded shadow">
   <h2 class="text-xl font-semibold mb-2">Tâches</h2>
   <ul id="taskList"></ul>
 </div>
 
 <!-- Suggestion prochaine tâche -->
-<div id="nextTaskDiv" class="mb-6 p-4 bg-green-100 rounded shadow hidden">
+<div id="nextTaskDiv" class="mb-6 p-4 bg-green-100 dark:bg-green-900 rounded shadow hidden">
   <h2 class="text-xl font-semibold mb-2">Prochaine tâche suggérée</h2>
   <p id="nextTaskText"></p>
 </div>
 
+<!-- Alertes énergie / micro-pauses -->
+<div id="energyAlert" class="mb-6 p-4 rounded shadow hidden"></div>
+
 <!-- Slider énergie -->
-<div class="mb-6 p-4 bg-white rounded shadow">
+<div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded shadow">
   <h2 class="text-xl font-semibold mb-2">Niveau d'énergie</h2>
   <input id="energy" type="range" min="0" max="100" value="80" class="w-full mb-2"/>
-  <button onclick="logEnergy()" class="bg-yellow-500 p-2 rounded text-white">Enregistrer énergie</button>
+  <button onclick="logEnergy()" class="bg-yellow-500 p-2 rounded text-white hover:bg-yellow-600 transition">Enregistrer énergie</button>
   <p id="lastEnergy">Dernière énergie : 80</p>
 </div>
 
 <!-- Graphique énergie -->
-<div class="p-4 bg-white rounded shadow">
+<div class="p-4 bg-white dark:bg-gray-800 rounded shadow">
   <h2 class="text-xl font-semibold mb-2">Graphique d'énergie</h2>
   <canvas id="energyChart"></canvas>
 </div>
 
+<!-- Badge motivant -->
+<div id="badgeDiv" class="mt-6 p-4 bg-indigo-100 dark:bg-indigo-900 rounded shadow hidden">
+  <h2 class="text-xl font-semibold mb-2">Badge du jour 🏆</h2>
+  <p id="badgeText"></p>
+</div>
+
 <script>
 let tasks = [];
-let energyLog = [80]; // tableau pour graphique
+let energyLog = [80];
 let lastEnergy = 80;
+
+// Mode sombre automatique
+if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+  document.body.classList.add('dark');
+}
 
 // Ajouter une tâche
 function addTask() {
@@ -68,13 +84,14 @@ function addTask() {
 
   renderTasks();
   suggestNextTask();
+  updateBadge();
 }
 
-// Afficher la liste des tâches
+// Afficher les tâches
 function renderTasks() {
   const list = document.getElementById('taskList');
   list.innerHTML = '';
-  tasks.forEach((t,i)=>{
+  tasks.forEach((t)=>{
     const li = document.createElement('li');
     li.textContent = `${t.title} - ${t.duration} min - priorité ${t.priority}`;
     list.appendChild(li);
@@ -87,10 +104,25 @@ function suggestNextTask() {
     document.getElementById('nextTaskDiv').classList.add('hidden');
     return;
   }
-  // simple IA : tâche avec priorité la plus haute
   const next = tasks.reduce((a,b)=>b.priority>a.priority?b:a);
   document.getElementById('nextTaskText').textContent = `${next.title} - ${next.duration} min - priorité ${next.priority}`;
   document.getElementById('nextTaskDiv').classList.remove('hidden');
+}
+
+// Micro-pauses et alertes énergie
+function showEnergyAlert(val){
+  const alertDiv = document.getElementById('energyAlert');
+  alertDiv.classList.remove('hidden');
+  if(val>70){
+    alertDiv.textContent = "💪 Tu es en pleine forme ! Continue comme ça.";
+    alertDiv.className = "mb-6 p-4 bg-green-100 dark:bg-green-900 rounded shadow";
+  } else if(val>40){
+    alertDiv.textContent = "⚠️ Niveau d'énergie moyen. Pense à faire une petite pause.";
+    alertDiv.className = "mb-6 p-4 bg-yellow-100 dark:bg-yellow-900 rounded shadow";
+  } else {
+    alertDiv.textContent = "⛔ Energie faible ! Repose-toi avant de continuer.";
+    alertDiv.className = "mb-6 p-4 bg-red-100 dark:bg-red-900 rounded shadow";
+  }
 }
 
 // Enregistrer énergie
@@ -98,9 +130,11 @@ function logEnergy() {
   const val = parseInt(document.getElementById('energy').value);
   lastEnergy = val;
   energyLog.push(val);
-  if(energyLog.length>20) energyLog.shift(); // garder les 20 derniers points
+  if(energyLog.length>20) energyLog.shift();
   document.getElementById('lastEnergy').textContent = 'Dernière énergie : '+val;
   drawChart();
+  showEnergyAlert(val);
+  updateBadge();
 }
 
 // Graphique
@@ -117,10 +151,29 @@ function drawChart() {
   });
 }
 
+// Badge motivant
+function updateBadge() {
+  const div = document.getElementById('badgeDiv');
+  const text = document.getElementById('badgeText');
+  if(tasks.length===0){
+    div.classList.add('hidden');
+  } else if(lastEnergy>70){
+    text.textContent = "🏆 Productif ! Tu es au top de ton énergie.";
+    div.classList.remove('hidden');
+  } else if(lastEnergy>40){
+    text.textContent = "🌟 Zen : continue doucement mais sûrement.";
+    div.classList.remove('hidden');
+  } else {
+    text.textContent = "🛌 Repos conseillé pour recharger tes batteries.";
+    div.classList.remove('hidden');
+  }
+}
+
 // Initialisation
 renderTasks();
 suggestNextTask();
 drawChart();
+updateBadge();
 </script>
 
 </body>
