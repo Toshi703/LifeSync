@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>LifeSync</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body { font-family: sans-serif; }
+</style>
+</head>
+<body class="bg-gray-100 p-8">
+
+<h1 class="text-3xl font-bold mb-6">LifeSync – Tableau de bord</h1>
+
+<!-- Ajouter une tâche -->
+<div class="mb-6 p-4 bg-white rounded shadow">
+  <h2 class="text-xl font-semibold mb-2">Ajouter une tâche</h2>
+  <input id="title" placeholder="Titre" class="border p-2 mr-2 rounded"/>
+  <input id="duration" type="number" placeholder="Durée (min)" class="border p-2 mr-2 rounded w-24"/>
+  <input id="priority" type="number" placeholder="Priorité (1-5)" min="1" max="5" value="1"
+         class="border p-2 mr-2 rounded w-24"/>
+  <button onclick="addTask()" class="bg-blue-500 text-white p-2 rounded">Ajouter</button>
+</div>
+
+<!-- Liste des tâches -->
+<div class="mb-6 p-4 bg-white rounded shadow">
+  <h2 class="text-xl font-semibold mb-2">Tâches</h2>
+  <ul id="taskList"></ul>
+</div>
+
+<!-- Suggestion prochaine tâche -->
+<div id="nextTaskDiv" class="mb-6 p-4 bg-green-100 rounded shadow hidden">
+  <h2 class="text-xl font-semibold mb-2">Prochaine tâche suggérée</h2>
+  <p id="nextTaskText"></p>
+</div>
+
+<!-- Slider énergie -->
+<div class="mb-6 p-4 bg-white rounded shadow">
+  <h2 class="text-xl font-semibold mb-2">Niveau d'énergie</h2>
+  <input id="energy" type="range" min="0" max="100" value="80" class="w-full mb-2"/>
+  <button onclick="logEnergy()" class="bg-yellow-500 p-2 rounded text-white">Enregistrer énergie</button>
+  <p id="lastEnergy">Dernière énergie : 80</p>
+</div>
+
+<!-- Graphique énergie -->
+<div class="p-4 bg-white rounded shadow">
+  <h2 class="text-xl font-semibold mb-2">Graphique d'énergie</h2>
+  <canvas id="energyChart"></canvas>
+</div>
+
+<script>
+let tasks = [];
+let energyLog = [80]; // tableau pour graphique
+let lastEnergy = 80;
+
+// Ajouter une tâche
+function addTask() {
+  const title = document.getElementById('title').value.trim();
+  const duration = parseInt(document.getElementById('duration').value);
+  const priority = parseInt(document.getElementById('priority').value);
+  if (!title) return;
+
+  tasks.push({title,duration,priority});
+  document.getElementById('title').value='';
+  document.getElementById('duration').value='30';
+  document.getElementById('priority').value='1';
+
+  renderTasks();
+  suggestNextTask();
+}
+
+// Afficher la liste des tâches
+function renderTasks() {
+  const list = document.getElementById('taskList');
+  list.innerHTML = '';
+  tasks.forEach((t,i)=>{
+    const li = document.createElement('li');
+    li.textContent = `${t.title} - ${t.duration} min - priorité ${t.priority}`;
+    list.appendChild(li);
+  });
+}
+
+// Suggestion prochaine tâche
+function suggestNextTask() {
+  if (tasks.length === 0) {
+    document.getElementById('nextTaskDiv').classList.add('hidden');
+    return;
+  }
+  // simple IA : tâche avec priorité la plus haute
+  const next = tasks.reduce((a,b)=>b.priority>a.priority?b:a);
+  document.getElementById('nextTaskText').textContent = `${next.title} - ${next.duration} min - priorité ${next.priority}`;
+  document.getElementById('nextTaskDiv').classList.remove('hidden');
+}
+
+// Enregistrer énergie
+function logEnergy() {
+  const val = parseInt(document.getElementById('energy').value);
+  lastEnergy = val;
+  energyLog.push(val);
+  if(energyLog.length>20) energyLog.shift(); // garder les 20 derniers points
+  document.getElementById('lastEnergy').textContent = 'Dernière énergie : '+val;
+  drawChart();
+}
+
+// Graphique
+let chart = null;
+function drawChart() {
+  const ctx = document.getElementById('energyChart').getContext('2d');
+  if(chart) chart.destroy();
+  chart = new Chart(ctx,{
+    type:'line',
+    data:{
+      labels: Array(energyLog.length).fill('').map((_,i)=>i===energyLog.length-1?'Maintenant':''),
+      datasets:[{label:'Énergie', data: energyLog, borderColor:'blue', fill:false, tension:0.3}]
+    }
+  });
+}
+
+// Initialisation
+renderTasks();
+suggestNextTask();
+drawChart();
+</script>
+
+</body>
+</html>
