@@ -2,10 +2,10 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>LifeSync Ultra</title>
+<title>LifeSync Ultimate</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 .fade { animation: fade 0.4s ease }
@@ -14,7 +14,7 @@
   to {opacity:1; transform:translateY(0)}
 }
 .glass {
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
   background: rgba(255,255,255,0.75);
 }
 .dark .glass {
@@ -23,76 +23,86 @@
 </style>
 </head>
 
-<body class="bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-slate-900 dark:to-slate-800 min-h-screen p-6 text-gray-800 dark:text-gray-100">
+<body class="bg-gradient-to-br from-indigo-100 via-blue-100 to-emerald-100 
+dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 
+min-h-screen p-6 text-gray-800 dark:text-gray-100 transition">
 
-<h1 class="text-4xl font-black text-center mb-2">🧠 LifeSync Ultra</h1>
-<p class="text-center opacity-80 mb-6">Décide quoi faire. Fais-le. Respire.</p>
+<h1 class="text-4xl font-black text-center mb-1">🧠 LifeSync</h1>
+<p class="text-center opacity-70 mb-6">Ton copilote personnel</p>
+
+<!-- ÉNERGIE -->
+<div class="glass rounded-xl p-4 mb-4 shadow fade">
+  <h2 class="font-bold mb-2">⚡ Énergie actuelle</h2>
+  <input id="energy" type="range" min="0" max="100" class="w-full">
+  <p id="energyText" class="mt-1 text-sm opacity-80"></p>
+</div>
 
 <!-- AJOUT TÂCHE -->
-<div class="glass rounded-xl p-4 mb-6 shadow fade">
-  <h2 class="font-bold mb-2">➕ Nouvelle tâche</h2>
-  <div class="flex gap-2 flex-wrap">
-    <input id="title" placeholder="Tâche" class="p-2 rounded border w-full sm:w-auto">
+<div class="glass rounded-xl p-4 mb-4 shadow fade">
+  <h2 class="font-bold mb-2">➕ Ajouter une tâche</h2>
+  <div class="flex flex-wrap gap-2">
+    <input id="title" placeholder="Tâche" class="p-2 rounded border w-full">
     <input id="duration" type="number" placeholder="Durée (min)" class="p-2 rounded border w-32">
     <select id="priority" class="p-2 rounded border">
       <option value="1">🟢 Faible</option>
       <option value="3">🟡 Moyenne</option>
       <option value="5">🔴 Haute</option>
     </select>
-    <button onclick="addTask()" class="bg-indigo-600 text-white px-4 rounded">Ajouter</button>
+    <button onclick="addTask()" class="bg-indigo-600 text-white px-4 rounded">
+      Ajouter
+    </button>
   </div>
 </div>
 
-<!-- ÉNERGIE -->
-<div class="glass rounded-xl p-4 mb-6 shadow fade">
-  <h2 class="font-bold mb-2">⚡ Énergie actuelle</h2>
-  <input id="energy" type="range" min="0" max="100" class="w-full">
-  <p id="energyText" class="mt-1">80%</p>
-</div>
-
-<!-- ACTION PRINCIPALE -->
-<div class="text-center mb-6 fade">
-  <button onclick="decideTask()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl text-lg shadow">
+<!-- ACTION -->
+<div class="text-center my-6 fade">
+  <button onclick="decide()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl text-lg shadow-lg">
     🤔 Que dois-je faire maintenant ?
   </button>
 </div>
 
-<!-- TÂCHE ACTUELLE -->
-<div id="currentTask" class="glass rounded-xl p-4 mb-6 shadow hidden fade"></div>
+<!-- FOCUS -->
+<div id="focus" class="glass rounded-xl p-6 mb-4 shadow hidden fade text-center"></div>
 
 <!-- LISTE -->
-<div class="glass rounded-xl p-4 mb-6 shadow fade">
+<div class="glass rounded-xl p-4 mb-4 shadow fade">
   <h2 class="font-bold mb-2">📋 Tâches restantes</h2>
-  <ul id="taskList"></ul>
+  <ul id="list"></ul>
 </div>
 
-<!-- STATS -->
+<!-- BILAN -->
 <div class="glass rounded-xl p-4 shadow fade">
-  <h2 class="font-bold mb-2">📊 Aujourd’hui</h2>
+  <h2 class="font-bold mb-2">📊 Bilan</h2>
   <p id="stats"></p>
 </div>
 
 <script>
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let workedMinutes = Number(localStorage.getItem("worked")) || 0;
+let data = JSON.parse(localStorage.getItem("lifesync")) || {
+  tasks: [],
+  worked: 0,
+  sessions: 0
+};
 
-const energyInput = document.getElementById("energy");
+const energy = document.getElementById("energy");
 const energyText = document.getElementById("energyText");
 
-energyInput.oninput = () => energyText.textContent = energyInput.value + "%";
+energy.value = 70;
+energyText.textContent = "70% — forme correcte";
+
+energy.oninput = ()=>{
+  energyText.textContent = energy.value+"%";
+}
 
 function save() {
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-  localStorage.setItem("worked", workedMinutes);
+  localStorage.setItem("lifesync", JSON.stringify(data));
 }
 
 function addTask() {
-  const t = title.value.trim();
-  if(!t) return;
-  tasks.push({
-    title:t,
-    duration:Number(duration.value||30),
-    priority:Number(priority.value)
+  if(!title.value.trim()) return;
+  data.tasks.push({
+    title: title.value,
+    duration: Number(duration.value||30),
+    priority: Number(priority.value)
   });
   title.value="";
   render();
@@ -100,41 +110,46 @@ function addTask() {
 }
 
 function render() {
-  taskList.innerHTML="";
-  tasks.forEach((t,i)=>{
-    const li=document.createElement("li");
+  list.innerHTML="";
+  data.tasks.forEach(t=>{
+    let li=document.createElement("li");
     li.className="p-2 rounded mb-1 bg-white/60 dark:bg-slate-700/60";
     li.textContent=`${t.title} • ${t.duration} min`;
-    taskList.appendChild(li);
+    list.appendChild(li);
   });
-  stats.textContent=`⏱️ Temps travaillé : ${workedMinutes} min`;
+  stats.innerHTML = `
+    ⏱️ Temps productif : <b>${data.worked} min</b><br>
+    🧠 Sessions focus : <b>${data.sessions}</b>
+  `;
 }
 
-function decideTask() {
-  if(tasks.length===0) return;
-  const energy = Number(energyInput.value);
-  let sorted = [...tasks].sort((a,b)=>{
-    let scoreA = a.priority*2 - a.duration + energy;
-    let scoreB = b.priority*2 - b.duration + energy;
-    return scoreB-scoreA;
-  });
-  const task = sorted[0];
-  currentTask.innerHTML = `
-    <h2 class="text-xl font-bold mb-2">🎯 Fais maintenant :</h2>
-    <p class="mb-2">${task.title}</p>
-    <p class="opacity-80 mb-4">⏱️ ${task.duration} min</p>
-    <button onclick="completeTask('${task.title}')" class="bg-indigo-600 text-white px-4 py-2 rounded">
+function decide() {
+  if(data.tasks.length===0) return;
+
+  const e = Number(energy.value);
+  let best = data.tasks.sort((a,b)=>{
+    let sa = a.priority*3 - a.duration + e;
+    let sb = b.priority*3 - b.duration + e;
+    return sb-sa;
+  })[0];
+
+  focus.innerHTML = `
+    <h2 class="text-2xl font-bold mb-2">🎯 Focus</h2>
+    <p class="text-lg mb-2">${best.title}</p>
+    <p class="opacity-70 mb-4">⏱️ ${best.duration} minutes</p>
+    <button onclick="complete('${best.title}')" class="bg-indigo-600 text-white px-6 py-2 rounded-xl">
       ✅ Terminé
     </button>
   `;
-  currentTask.classList.remove("hidden");
+  focus.classList.remove("hidden");
 }
 
-function completeTask(title) {
-  const t = tasks.find(x=>x.title===title);
-  workedMinutes += t.duration;
-  tasks = tasks.filter(x=>x.title!==title);
-  currentTask.classList.add("hidden");
+function complete(title) {
+  let t = data.tasks.find(x=>x.title===title);
+  data.worked += t.duration;
+  data.sessions++;
+  data.tasks = data.tasks.filter(x=>x.title!==title);
+  focus.classList.add("hidden");
   render();
   save();
 }
