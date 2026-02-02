@@ -3,49 +3,51 @@
 <head>
 <meta charset="UTF-8">
 <title>LifeSync</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 body { font-family: sans-serif; }
 </style>
 </head>
-<body class="bg-gray-100 p-8">
+<body class="bg-gray-100 p-6 dark:bg-gray-900 dark:text-white">
 
-<h1 class="text-3xl font-bold mb-6">LifeSync – Tableau de bord</h1>
+<h1 class="text-3xl font-bold mb-6 text-center">LifeSync – Tableau de bord</h1>
 
 <!-- Ajouter une tâche -->
-<div class="mb-6 p-4 bg-white rounded shadow">
+<div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl shadow">
   <h2 class="text-xl font-semibold mb-2">Ajouter une tâche</h2>
   <input id="title" placeholder="Titre" class="border p-2 mr-2 rounded"/>
   <input id="duration" type="number" placeholder="Durée (min)" class="border p-2 mr-2 rounded w-24"/>
   <input id="priority" type="number" placeholder="Priorité (1-5)" min="1" max="5" value="1"
          class="border p-2 mr-2 rounded w-24"/>
-  <button onclick="addTask()" class="bg-blue-500 text-white p-2 rounded">Ajouter</button>
+  <button onclick="addTask()" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">Ajouter</button>
 </div>
 
 <!-- Liste des tâches -->
-<div class="mb-6 p-4 bg-white rounded shadow">
+<div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl shadow">
   <h2 class="text-xl font-semibold mb-2">Tâches</h2>
   <ul id="list"></ul>
 </div>
 
 <!-- Bouton décision focus -->
-<div class="mb-6 p-4 bg-green-100 rounded shadow">
-  <button onclick="decide()" class="bg-green-600 text-white px-4 py-2 rounded">🎯 Que dois-je faire maintenant ?</button>
+<div class="mb-6 p-4 bg-green-100 dark:bg-green-800 rounded-xl shadow text-center">
+  <button onclick="decide()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">🎯 Que dois-je faire maintenant ?</button>
 </div>
 
 <!-- Zone Focus / Timer -->
-<div id="focus" class="mb-6 p-4 bg-yellow-100 rounded shadow hidden"></div>
+<div id="focus" class="mb-6 p-4 bg-yellow-100 dark:bg-yellow-700 rounded-xl shadow hidden"></div>
 
 <!-- Slider énergie -->
-<div class="mb-6 p-4 bg-white rounded shadow">
+<div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded-xl shadow">
   <h2 class="text-xl font-semibold mb-2">Niveau d'énergie</h2>
   <input id="energy" type="range" min="0" max="100" value="80" class="w-full mb-2"/>
   <p id="energyText">80%</p>
 </div>
 
 <!-- Graphique énergie -->
-<div class="p-4 bg-white/60 dark:bg-slate-800/60 rounded-xl shadow mb-4">
+<div class="p-4 bg-white dark:bg-gray-800 rounded-xl shadow mb-4">
   <h2 class="text-xl font-semibold mb-2">📈 Historique énergie</h2>
   <canvas id="energyChart"></canvas>
 </div>
