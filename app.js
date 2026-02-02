@@ -3,18 +3,40 @@ import { decideBestTask } from "./modules/ai.js";
 import { saveTasks, loadTasks } from "./modules/storage.js";
 import { startFocus } from "./modules/focus.js";
 import { logEnergy, getEnergyLog } from "./modules/stats.js";
+import { translations } from "./modules/i18n.js";
 
 // Données
 let tasks = loadTasks();
+let currentLang = "fr";
 
 // UI
 const listEl = document.getElementById("list");
 const focusEl = document.getElementById("focus");
-const statsEl = document.getElementById("stats");
 const energyInput = document.getElementById("energy");
+const langSelector = document.getElementById("langSelector");
 
 // Graphique énergie
 let energyChart = null;
+
+// Initialisation texte et langue
+function setLanguage(lang){
+  currentLang = lang;
+  const t = translations[lang];
+
+  document.getElementById("mainTitle").textContent = t.title;
+  document.getElementById("title").placeholder = t.taskPlaceholder;
+  document.getElementById("duration").placeholder = t.durationPlaceholder;
+  document.getElementById("priority").placeholder = t.priorityPlaceholder;
+  document.getElementById("addTaskBtn").textContent = t.addTask;
+  document.getElementById("decideBtn").textContent = t.decideButton;
+  document.getElementById("energyLabel").textContent = t.energyLevel;
+  document.getElementById("energyHistoryLabel").textContent = t.energyHistory;
+}
+
+// Changement de langue
+langSelector.addEventListener("change", e=>{
+  setLanguage(e.target.value);
+});
 
 // Initialisation énergie
 energyInput.addEventListener("input", () => {
@@ -49,7 +71,7 @@ window.addTask = function() {
   save();
 };
 
-// Rendu de la liste et stats
+// Rendu de la liste
 function render() {
   listEl.innerHTML = "";
   tasks.forEach(t => {
@@ -58,11 +80,9 @@ function render() {
     li.textContent = `${t.title} • ${t.duration} min`;
     listEl.appendChild(li);
   });
-
-  statsEl.innerHTML = `⏱️ Tâches : <b>${tasks.length}</b>`;
 }
 
-// Décision de tâche avec mode focus
+// Décision focus
 window.decide = function() {
   if (tasks.length === 0) return;
   const energy = Number(energyInput.value);
@@ -113,5 +133,6 @@ function drawChart() {
 }
 
 // Initial render
+setLanguage(currentLang);
 render();
 drawChart();
