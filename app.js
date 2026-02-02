@@ -1,73 +1,76 @@
-let data = JSON.parse(localStorage.getItem("lifesync")) || {
-  tasks: [],
-  worked: 0,
-  sessions: 0
-};
+// Import des modules
+import { decideBestTask } from "./modules/ai.js";
+import { saveTasks, loadTasks } from "./modules/storage.js";
+import { startFocus } from "./modules/focus.js";
 
+// Données
+let tasks = loadTasks();
+
+// UI
+const listEl = document.getElementById("list");
+const focusEl = document.getElementById("focus");
+const statsEl = document.getElementById("stats");
+const energyInput = document.getElementById("energy");
+
+// Initialisation énergie
+energyInput.addEventListener("input", () => {
+  document.getElementById("energyText").textContent = energyInput.value + "%";
+});
+
+// Sauvegarde et rendu
 function save() {
-  localStorage.setItem("lifesync", JSON.stringify(data));
+  saveTasks(tasks);
+  render();
 }
 
-function addTask() {
-  const title = document.getElementById("title").value.trim();
-  if (!title) return;
+// Ajouter tâche
+window.addTask = function() {
+  const titleEl = document.getElementById("title");
+  const durationEl = document.getElementById("duration");
+  const priorityEl = document.getElementById("priority");
 
-  data.tasks.push({
-    title,
-    duration: Number(document.getElementById("duration").value || 30),
-    priority: Number(document.getElementById("priority").value)
+  const t = titleEl.value.trim();
+  if (!t) return;
+
+  tasks.push({
+    title: t,
+    duration: Number(durationEl.value || 30),
+    priority: Number(priorityEl.value)
   });
 
-  document.getElementById("title").value = "";
+  titleEl.value = "";
+  durationEl.value = "";
   render();
   save();
-}
+};
 
+// Rendu de la liste et stats
 function render() {
-  const list = document.getElementById("list");
-  list.innerHTML = "";
-  data.tasks.forEach(t => {
+  listEl.innerHTML = "";
+  tasks.forEach(t => {
     const li = document.createElement("li");
     li.className = "p-2 rounded mb-1 bg-white/60 dark:bg-slate-700/60";
     li.textContent = `${t.title} • ${t.duration} min`;
-    list.appendChild(li);
+    listEl.appendChild(li);
   });
 
-  document.getElementById("stats").innerHTML =
-    `⏱️ Temps productif : <b>${data.worked} min</b><br>
-     🧠 Sessions focus : <b>${data.sessions}</b>`;
+  statsEl.innerHTML = `⏱️ Tâches : <b>${tasks.length}</b>`;
 }
 
-function decide() {
-  if (data.tasks.length === 0) return;
+// Décision de tâche avec mode focus
+window.decide = function() {
+  if (tasks.length === 0) return;
+  const energy = Number(energyInput.value);
+  const best = decideBestTask(tasks, energy);
+  if (!best) return;
 
-  const energy = Number(document.getElementById("energy").value);
-  const best = data.tasks.sort((a, b) =>
-    (b.priority * 3 - b.duration + energy) -
-    (a.priority * 3 - a.duration + energy)
-  )[0];
+  startFocus(best, () => {
+    // Quand le focus est terminé
+    tasks = tasks.filter(x => x.title !== best.title);
+    focusEl.classList.add("hidden");
+    save();
+  });
+};
 
-  const focus = document.getElementById("focus");
-  focus.innerHTML = `
-    <h2 class="text-2xl font-bold mb-2">🎯 Focus</h2>
-    <p class="text-lg mb-2">${best.title}</p>
-    <p class="opacity-70 mb-4">⏱️ ${best.duration} minutes</p>
-    <button onclick="complete('${best.title}')" class="bg-indigo-600 text-white px-6 py-2 rounded-xl">
-      ✅ Terminé
-    </button>
-  `;
-  focus.classList.remove("hidden");
-}
-
-function complete(title) {
-  const task = data.tasks.find(t => t.title === title);
-  data.worked += task.duration;
-  data.sessions++;
-  data.tasks = data.tasks.filter(t => t.title !== title);
-
-  document.getElementById("focus").classList.add("hidden");
-  render();
-  save();
-}
-
+// Initial render
 render();
