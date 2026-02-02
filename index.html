@@ -2,225 +2,144 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>LifeSync Pro</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>LifeSync Ultra</title>
+
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
-body { font-family: sans-serif; transition: background-color 0.3s, color 0.3s;}
-.dark body { background-color: #1e293b; color: #f1f5f9;}
-.fade-in { animation: fadeIn 0.5s ease forwards;}
-@keyframes fadeIn { from {opacity:0; transform: translateY(10px);} to {opacity:1; transform: translateY(0);} }
+.fade { animation: fade 0.4s ease }
+@keyframes fade {
+  from {opacity:0; transform:translateY(10px)}
+  to {opacity:1; transform:translateY(0)}
+}
+.glass {
+  backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.75);
+}
+.dark .glass {
+  background: rgba(30,41,59,0.75);
+}
 </style>
 </head>
-<body class="bg-gray-100 p-8">
 
-<h1 class="text-4xl font-bold mb-6 text-center">🌟 LifeSync Pro 🌟</h1>
-<p class="text-center mb-6">Gère tes tâches et ton énergie efficacement !</p>
+<body class="bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-slate-900 dark:to-slate-800 min-h-screen p-6 text-gray-800 dark:text-gray-100">
 
-<!-- Ajouter une tâche -->
-<div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded shadow">
-  <h2 class="text-xl font-semibold mb-2">Ajouter une tâche</h2>
-  <input id="title" placeholder="Titre" class="border p-2 mr-2 rounded"/>
-  <input id="duration" type="number" placeholder="Durée (min)" class="border p-2 mr-2 rounded w-24"/>
-  <input id="priority" type="number" placeholder="Priorité (1-5)" min="1" max="5" value="1"
-         class="border p-2 mr-2 rounded w-24"/>
-  <button onclick="addTask()" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition">Ajouter</button>
+<h1 class="text-4xl font-black text-center mb-2">🧠 LifeSync Ultra</h1>
+<p class="text-center opacity-80 mb-6">Décide quoi faire. Fais-le. Respire.</p>
+
+<!-- AJOUT TÂCHE -->
+<div class="glass rounded-xl p-4 mb-6 shadow fade">
+  <h2 class="font-bold mb-2">➕ Nouvelle tâche</h2>
+  <div class="flex gap-2 flex-wrap">
+    <input id="title" placeholder="Tâche" class="p-2 rounded border w-full sm:w-auto">
+    <input id="duration" type="number" placeholder="Durée (min)" class="p-2 rounded border w-32">
+    <select id="priority" class="p-2 rounded border">
+      <option value="1">🟢 Faible</option>
+      <option value="3">🟡 Moyenne</option>
+      <option value="5">🔴 Haute</option>
+    </select>
+    <button onclick="addTask()" class="bg-indigo-600 text-white px-4 rounded">Ajouter</button>
+  </div>
 </div>
 
-<!-- Liste des tâches -->
-<div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded shadow">
-  <h2 class="text-xl font-semibold mb-2">Tâches</h2>
+<!-- ÉNERGIE -->
+<div class="glass rounded-xl p-4 mb-6 shadow fade">
+  <h2 class="font-bold mb-2">⚡ Énergie actuelle</h2>
+  <input id="energy" type="range" min="0" max="100" class="w-full">
+  <p id="energyText" class="mt-1">80%</p>
+</div>
+
+<!-- ACTION PRINCIPALE -->
+<div class="text-center mb-6 fade">
+  <button onclick="decideTask()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl text-lg shadow">
+    🤔 Que dois-je faire maintenant ?
+  </button>
+</div>
+
+<!-- TÂCHE ACTUELLE -->
+<div id="currentTask" class="glass rounded-xl p-4 mb-6 shadow hidden fade"></div>
+
+<!-- LISTE -->
+<div class="glass rounded-xl p-4 mb-6 shadow fade">
+  <h2 class="font-bold mb-2">📋 Tâches restantes</h2>
   <ul id="taskList"></ul>
 </div>
 
-<!-- Historique tâches terminées -->
-<div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded shadow">
-  <h2 class="text-xl font-semibold mb-2">Historique des tâches terminées</h2>
-  <ul id="completedList"></ul>
+<!-- STATS -->
+<div class="glass rounded-xl p-4 shadow fade">
+  <h2 class="font-bold mb-2">📊 Aujourd’hui</h2>
+  <p id="stats"></p>
 </div>
-
-<!-- Suggestion prochaine tâche -->
-<div id="nextTaskDiv" class="mb-6 p-4 bg-green-100 dark:bg-green-900 rounded shadow hidden">
-  <h2 class="text-xl font-semibold mb-2">Prochaine tâche suggérée</h2>
-  <p id="nextTaskText"></p>
-</div>
-
-<!-- Alertes énergie / micro-pauses -->
-<div id="energyAlert" class="mb-6 p-4 rounded shadow hidden"></div>
-
-<!-- Slider énergie -->
-<div class="mb-6 p-4 bg-white dark:bg-gray-800 rounded shadow">
-  <h2 class="text-xl font-semibold mb-2">Niveau d'énergie</h2>
-  <input id="energy" type="range" min="0" max="100" value="80" class="w-full mb-2"/>
-  <button onclick="logEnergy()" class="bg-yellow-500 p-2 rounded text-white hover:bg-yellow-600 transition">Enregistrer énergie</button>
-  <p id="lastEnergy">Dernière énergie : 80</p>
-</div>
-
-<!-- Graphique énergie -->
-<div class="p-4 bg-white dark:bg-gray-800 rounded shadow">
-  <h2 class="text-xl font-semibold mb-2">Graphique d'énergie</h2>
-  <canvas id="energyChart"></canvas>
-</div>
-
-<!-- Badge motivant -->
-<div id="badgeDiv" class="mt-6 p-4 bg-indigo-100 dark:bg-indigo-900 rounded shadow hidden">
-  <h2 class="text-xl font-semibold mb-2">Badge du jour 🏆</h2>
-  <p id="badgeText"></p>
-</div>
-
-<audio id="alertSound">
-  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
-</audio>
 
 <script>
-let tasks = [];
-let completedTasks = [];
-let energyLog = [80];
-let lastEnergy = 80;
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let workedMinutes = Number(localStorage.getItem("worked")) || 0;
 
-// Mode sombre automatique
-if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
-  document.body.classList.add('dark');
+const energyInput = document.getElementById("energy");
+const energyText = document.getElementById("energyText");
+
+energyInput.oninput = () => energyText.textContent = energyInput.value + "%";
+
+function save() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  localStorage.setItem("worked", workedMinutes);
 }
 
-// Ajouter une tâche
 function addTask() {
-  const title = document.getElementById('title').value.trim();
-  const duration = parseInt(document.getElementById('duration').value);
-  const priority = parseInt(document.getElementById('priority').value);
-  if (!title) return;
-
-  tasks.push({title,duration,priority});
-  document.getElementById('title').value='';
-  document.getElementById('duration').value='30';
-  document.getElementById('priority').value='1';
-
-  renderTasks();
-  suggestNextTask();
-  updateBadge();
+  const t = title.value.trim();
+  if(!t) return;
+  tasks.push({
+    title:t,
+    duration:Number(duration.value||30),
+    priority:Number(priority.value)
+  });
+  title.value="";
+  render();
+  save();
 }
 
-// Afficher les tâches
-function renderTasks() {
-  const list = document.getElementById('taskList');
-  list.innerHTML = '';
+function render() {
+  taskList.innerHTML="";
   tasks.forEach((t,i)=>{
-    const li = document.createElement('li');
-    li.textContent = `${t.title} - ${t.duration} min - priorité ${t.priority}`;
-    li.className = `p-1 rounded mb-1 fade-in ${priorityColor(t.priority)}`;
-    li.onclick = ()=>completeTask(i);
-    list.appendChild(li);
+    const li=document.createElement("li");
+    li.className="p-2 rounded mb-1 bg-white/60 dark:bg-slate-700/60";
+    li.textContent=`${t.title} • ${t.duration} min`;
+    taskList.appendChild(li);
   });
+  stats.textContent=`⏱️ Temps travaillé : ${workedMinutes} min`;
 }
 
-// Marquer tâche comme terminée
-function completeTask(index){
-  const task = tasks.splice(index,1)[0];
-  completedTasks.push(task);
-  renderTasks();
-  renderCompleted();
-  suggestNextTask();
-  updateBadge();
-}
-
-// Afficher historique terminé
-function renderCompleted(){
-  const list = document.getElementById('completedList');
-  list.innerHTML = '';
-  completedTasks.forEach(t=>{
-    const li = document.createElement('li');
-    li.textContent = `${t.title} - ${t.duration} min - priorité ${t.priority}`;
-    li.className = "p-1 rounded mb-1 bg-gray-300 dark:bg-gray-700";
-    list.appendChild(li);
+function decideTask() {
+  if(tasks.length===0) return;
+  const energy = Number(energyInput.value);
+  let sorted = [...tasks].sort((a,b)=>{
+    let scoreA = a.priority*2 - a.duration + energy;
+    let scoreB = b.priority*2 - b.duration + energy;
+    return scoreB-scoreA;
   });
+  const task = sorted[0];
+  currentTask.innerHTML = `
+    <h2 class="text-xl font-bold mb-2">🎯 Fais maintenant :</h2>
+    <p class="mb-2">${task.title}</p>
+    <p class="opacity-80 mb-4">⏱️ ${task.duration} min</p>
+    <button onclick="completeTask('${task.title}')" class="bg-indigo-600 text-white px-4 py-2 rounded">
+      ✅ Terminé
+    </button>
+  `;
+  currentTask.classList.remove("hidden");
 }
 
-// Définir couleur selon priorité
-function priorityColor(p){
-  if(p<=2) return 'bg-green-200 dark:bg-green-700';
-  if(p<=4) return 'bg-yellow-200 dark:bg-yellow-700';
-  return 'bg-red-200 dark:bg-red-700';
+function completeTask(title) {
+  const t = tasks.find(x=>x.title===title);
+  workedMinutes += t.duration;
+  tasks = tasks.filter(x=>x.title!==title);
+  currentTask.classList.add("hidden");
+  render();
+  save();
 }
 
-// Suggestion prochaine tâche
-function suggestNextTask() {
-  if (tasks.length === 0) {
-    document.getElementById('nextTaskDiv').classList.add('hidden');
-    return;
-  }
-  const next = tasks.reduce((a,b)=>b.priority>a.priority?b:a);
-  document.getElementById('nextTaskText').textContent = `${next.title} - ${next.duration} min - priorité ${next.priority}`;
-  document.getElementById('nextTaskDiv').classList.remove('hidden');
-}
-
-// Micro-pauses et alertes énergie
-function showEnergyAlert(val){
-  const alertDiv = document.getElementById('energyAlert');
-  const audio = document.getElementById('alertSound');
-  alertDiv.classList.remove('hidden');
-  if(val>70){
-    alertDiv.textContent = "💪 Tu es en pleine forme ! Continue comme ça.";
-    alertDiv.className = "mb-6 p-4 bg-green-100 dark:bg-green-900 rounded shadow fade-in";
-  } else if(val>40){
-    alertDiv.textContent = "⚠️ Niveau d'énergie moyen. Pense à faire une petite pause.";
-    alertDiv.className = "mb-6 p-4 bg-yellow-100 dark:bg-yellow-900 rounded shadow fade-in";
-  } else {
-    alertDiv.textContent = "⛔ Energie faible ! Repose-toi avant de continuer.";
-    alertDiv.className = "mb-6 p-4 bg-red-100 dark:bg-red-900 rounded shadow fade-in";
-    audio.play();
-  }
-}
-
-// Enregistrer énergie
-function logEnergy() {
-  const val = parseInt(document.getElementById('energy').value);
-  lastEnergy = val;
-  energyLog.push(val);
-  if(energyLog.length>20) energyLog.shift();
-  document.getElementById('lastEnergy').textContent = 'Dernière énergie : '+val;
-  drawChart();
-  showEnergyAlert(val);
-  updateBadge();
-}
-
-// Graphique
-let chart = null;
-function drawChart() {
-  const ctx = document.getElementById('energyChart').getContext('2d');
-  if(chart) chart.destroy();
-  chart = new Chart(ctx,{
-    type:'line',
-    data:{
-      labels: Array(energyLog.length).fill('').map((_,i)=>i===energyLog.length-1?'Maintenant':''),
-      datasets:[{label:'Énergie', data: energyLog, borderColor:'blue', fill:false, tension:0.3}]
-    }
-  });
-}
-
-// Badge motivant
-function updateBadge() {
-  const div = document.getElementById('badgeDiv');
-  const text = document.getElementById('badgeText');
-  if(tasks.length===0){
-    div.classList.add('hidden');
-  } else if(lastEnergy>70){
-    text.textContent = "🏆 Productif ! Tu es au top de ton énergie.";
-    div.classList.remove('hidden');
-  } else if(lastEnergy>40){
-    text.textContent = "🌟 Zen : continue doucement mais sûrement.";
-    div.classList.remove('hidden');
-  } else {
-    text.textContent = "🛌 Repos conseillé pour recharger tes batteries.";
-    div.classList.remove('hidden');
-  }
-}
-
-// Initialisation
-renderTasks();
-renderCompleted();
-suggestNextTask();
-drawChart();
-updateBadge();
+render();
 </script>
 
 </body>
