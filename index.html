@@ -1,112 +1,56 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>LifeSync</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Styles -->
-  <link rel="stylesheet" href="style.css">
-
-  <!-- App JS -->
-  <script src="app.js" defer></script>
+<meta charset="UTF-8">
+<title>LifeSync</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body { font-family: sans-serif; }
+</style>
 </head>
+<body class="bg-gray-100 p-8">
 
-<body class="bg-gradient-to-br from-indigo-100 via-blue-100 to-emerald-100 
-             dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 
-             min-h-screen p-6 text-gray-800 dark:text-gray-100 transition">
+<h1 class="text-3xl font-bold mb-6">LifeSync – Tableau de bord</h1>
 
-  <!-- TITRE -->
-  <h1 class="text-4xl font-black text-center mb-1">🧠 LifeSync</h1>
-  <p class="text-center opacity-70 mb-6">Ton copilote personnel</p>
+<!-- Ajouter une tâche -->
+<div class="mb-6 p-4 bg-white rounded shadow">
+  <h2 class="text-xl font-semibold mb-2">Ajouter une tâche</h2>
+  <input id="title" placeholder="Titre" class="border p-2 mr-2 rounded"/>
+  <input id="duration" type="number" placeholder="Durée (min)" class="border p-2 mr-2 rounded w-24"/>
+  <input id="priority" type="number" placeholder="Priorité (1-5)" min="1" max="5" value="1"
+         class="border p-2 mr-2 rounded w-24"/>
+  <button onclick="addTask()" class="bg-blue-500 text-white p-2 rounded">Ajouter</button>
+</div>
 
-  <!-- ÉNERGIE -->
-  <div class="glass rounded-xl p-4 mb-4 shadow fade">
-    <h2 class="font-bold mb-2">⚡ Énergie actuelle</h2>
-    <input id="energy" type="range" min="0" max="100" value="70" class="w-full">
-    <p id="energyText" class="mt-1 text-sm opacity-80">70%</p>
-  </div>
+<!-- Liste des tâches -->
+<div class="mb-6 p-4 bg-white rounded shadow">
+  <h2 class="text-xl font-semibold mb-2">Tâches</h2>
+  <ul id="list"></ul>
+</div>
 
-  <!-- Graphique énergie -->
+<!-- Bouton décision focus -->
+<div class="mb-6 p-4 bg-green-100 rounded shadow">
+  <button onclick="decide()" class="bg-green-600 text-white px-4 py-2 rounded">🎯 Que dois-je faire maintenant ?</button>
+</div>
+
+<!-- Zone Focus / Timer -->
+<div id="focus" class="mb-6 p-4 bg-yellow-100 rounded shadow hidden"></div>
+
+<!-- Slider énergie -->
+<div class="mb-6 p-4 bg-white rounded shadow">
+  <h2 class="text-xl font-semibold mb-2">Niveau d'énergie</h2>
+  <input id="energy" type="range" min="0" max="100" value="80" class="w-full mb-2"/>
+  <p id="energyText">80%</p>
+</div>
+
+<!-- Graphique énergie -->
 <div class="p-4 bg-white/60 dark:bg-slate-800/60 rounded-xl shadow mb-4">
   <h2 class="text-xl font-semibold mb-2">📈 Historique énergie</h2>
   <canvas id="energyChart"></canvas>
 </div>
 
-  <!-- AJOUT TÂCHE -->
-  <div class="glass rounded-xl p-4 mb-4 shadow fade">
-    <h2 class="font-bold mb-2">➕ Ajouter une tâche</h2>
-
-    <div class="flex flex-wrap gap-2">
-      <input
-        id="title"
-        type="text"
-        placeholder="Nom de la tâche"
-        class="p-2 rounded border w-full"
-      >
-
-      <input
-        id="duration"
-        type="number"
-        placeholder="Durée (min)"
-        class="p-2 rounded border w-32"
-      >
-
-      <select id="priority" class="p-2 rounded border">
-        <option value="1">🟢 Faible</option>
-        <option value="3">🟡 Moyenne</option>
-        <option value="5">🔴 Haute</option>
-      </select>
-
-      <button
-        onclick="addTask()"
-        class="bg-indigo-600 text-white px-4 rounded hover:bg-indigo-700 transition"
-      >
-        Ajouter
-      </button>
-    </div>
-  </div>
-
-  <!-- ACTION PRINCIPALE -->
-  <div class="text-center my-6 fade">
-    <button
-      onclick="decide()"
-      class="bg-emerald-600 text-white px-6 py-3 rounded-xl text-lg shadow-lg hover:bg-emerald-700 transition"
-    >
-      🤔 Que dois-je faire maintenant ?
-    </button>
-  </div>
-
-  <!-- MODE FOCUS -->
-  <div
-    id="focus"
-    class="glass rounded-xl p-6 mb-4 shadow hidden fade text-center"
-  ></div>
-
-  <!-- LISTE DES TÂCHES -->
-  <div class="glass rounded-xl p-4 mb-4 shadow fade">
-    <h2 class="font-bold mb-2">📋 Tâches restantes</h2>
-    <ul id="list"></ul>
-  </div>
-
-  <!-- STATS -->
-  <div class="glass rounded-xl p-4 shadow fade">
-    <h2 class="font-bold mb-2">📊 Bilan</h2>
-    <p id="stats"></p>
-  </div>
-
-  <!-- PETIT SCRIPT UI (sans logique métier) -->
-  <script>
-    const energy = document.getElementById("energy");
-    const energyText = document.getElementById("energyText");
-
-    energy.addEventListener("input", () => {
-      energyText.textContent = energy.value + "%";
-    });
-  </script>
+<script type="module" src="app.js"></script>
 
 </body>
 </html>
